@@ -619,11 +619,6 @@
                         </div>
                         <button type="submit" style="width: 100%;">Login</button>
                     </form>
-                    <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 6px; font-size: 0.9rem;">
-                        <strong>Demo Account:</strong><br>
-                        Username: admin<br>
-                        Password: password123
-                    </div>
                 </div>
             </div>
         </div>
@@ -815,9 +810,8 @@
                     showAlert('Gagal menghapus data: ' + error.message, 'error');
                 }
             } else {
-                // Demo mode - remove from local array
-                allData = allData.filter(item => item.id !== id);
-                showAlert('Data berhasil dihapus!', 'success');
+                // Tanpa database - tidak bisa hapus
+                showAlert('Database belum dikonfigurasi. Tidak dapat menghapus data.', 'error');
             }
 
             loadAllData();
@@ -847,5 +841,332 @@
 
             updateTables();
             updateCharts();
-            update
+            updateStats();
         }
+
+        // Update tables
+        function updateTables() {
+            const categories = ['pendapatan', 'pembelanjaan', 'pembiayaan'];
+            
+            categories.forEach(category => {
+                const tableBody = document.getElementById(`${category}TableBody`);
+                const categoryData = allData.filter(item => 
+                    item.kategori.toLowerCase() === category
+                );
+
+                if (categoryData.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="4" class="no-data">Tidak ada data tersedia</td></tr>';
+                    return;
+                }
+
+                tableBody.innerHTML = categoryData.map(item => `
+                    <tr>
+                        <td>${item.tahun}</td>
+                        <td>${item.subkategori}</td>
+                        <td class="amount">${formatRupiah(item.jumlah)}</td>
+                        ${isAdmin ? `<td><button class="delete-btn" onclick="deleteData(${item.id})">Hapus</button></td>` : ''}
+                    </tr>
+                `).join('');
+            });
+        }
+
+        // Update statistics
+        function updateStats() {
+            const pendapatan = allData.filter(item => item.kategori === 'Pendapatan')
+                .reduce((sum, item) => sum + item.jumlah, 0);
+            const pembelanjaan = allData.filter(item => item.kategori === 'Pembelanjaan')
+                .reduce((sum, item) => sum + item.jumlah, 0);
+            const pembiayaan = allData.filter(item => item.kategori === 'Pembiayaan')
+                .reduce((sum, item) => sum + item.jumlah, 0);
+
+            document.getElementById('totalPendapatan').textContent = formatRupiah(pendapatan);
+            document.getElementById('totalPembelanjaan').textContent = formatRupiah(pembelanjaan);
+            document.getElementById('totalPembiayaan').textContent = formatRupiah(pembiayaan);
+        }
+
+        // Update charts
+        function updateCharts() {
+            updateOverviewChart();
+            updateCategoryChart('pendapatan');
+            updateCategoryChart('pembelanjaan');
+            updateCategoryChart('pembiayaan');
+        }
+
+        // Update overview chart
+        function updateOverviewChart() {
+            const ctx = document.getElementById('overviewChart').getContext('2d');
+            
+            if (charts.overview) {
+                charts.overview.destroy();
+            }
+
+            const pendapatan = allData.filter(item => item.kategori === 'Pendapatan')
+                .reduce((sum, item) => sum + item.jumlah, 0);
+            const pembelanjaan = allData.filter(item => item.kategori === 'Pembelanjaan')
+                .reduce((sum, item) => sum + item.jumlah, 0);
+            const pembiayaan = allData.filter(item => item.kategori === 'Pembiayaan')
+                .reduce((sum, item) => sum + item.jumlah, 0);
+
+            charts.overview = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Pendapatan', 'Pembelanjaan', 'Pembiayaan'],
+                    datasets: [{
+                        data: [pendapatan, pembelanjaan, pembiayaan],
+                        backgroundColor: [
+                            '#3498db',
+                            '#e74c3c',
+                            '#f39c12'
+                        ],
+                        borderWidth: 3,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                font: {
+                                    size: 14,
+                                    weight: 'bold'
+                                },
+                                padding: 20
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.label + ': ' + formatRupiah(context.raw);
+                                }
+                            },
+                            titleFont: {
+                                size: 16
+                            },
+                            bodyFont: {
+                                size: 14
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update category chart
+        function updateCategoryChart(category) {
+            const ctx = document.getElementById(`${category}Chart`).getContext('2d');
+            
+            if (charts[category]) {
+                charts[category].destroy();
+            }
+
+            const categoryData = allData.filter(item => 
+                item.kategori.toLowerCase() === category
+            );
+
+            if (categoryData.length === 0) {
+                return;
+            }
+
+            // Group by subkategori and sum amounts
+            const groupedData = categoryData.reduce((acc, item) => {
+                const key = item.subkategori;
+                if (!acc[key]) {
+                    acc[key] = 0;
+                }
+                acc[key] += item.jumlah;
+                return acc;
+            }, {});
+
+            const labels = Object.keys(groupedData);
+            const data = Object.values(groupedData);
+
+            // Generate distinct colors
+            const colors = generateColors(labels.length);
+
+            charts[category] = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: `${category.charAt(0).toUpperCase() + category.slice(1)} (Rp)`,
+                        data: data,
+                        backgroundColor: colors.background,
+                        borderColor: colors.border,
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                font: {
+                                    size: 14,
+                                    weight: 'bold'
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + formatRupiah(context.raw);
+                                }
+                            },
+                            titleFont: {
+                                size: 16
+                            },
+                            bodyFont: {
+                                size: 14
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: {
+                                font: {
+                                    size: 12,
+                                    weight: 'bold'
+                                },
+                                maxRotation: 45
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                font: {
+                                    size: 12,
+                                    weight: 'bold'
+                                },
+                                callback: function(value) {
+                                    return formatRupiahShort(value);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Generate distinct colors
+        function generateColors(count) {
+            const baseColors = [
+                '#3498db', '#e74c3c', '#f39c12', '#2ecc71', '#9b59b6',
+                '#1abc9c', '#34495e', '#e67e22', '#95a5a6', '#f1c40f',
+                '#8e44ad', '#27ae60', '#2980b9', '#c0392b', '#d35400'
+            ];
+
+            const background = [];
+            const border = [];
+
+            for (let i = 0; i < count; i++) {
+                const color = baseColors[i % baseColors.length];
+                background.push(color + '80'); // Add transparency
+                border.push(color);
+            }
+
+            return { background, border };
+        }
+
+        // Format rupiah
+        function formatRupiah(amount) {
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0
+            }).format(amount);
+        }
+
+        // Format rupiah short for chart labels
+        function formatRupiahShort(amount) {
+            if (amount >= 1000000000000) {
+                return 'Rp ' + (amount / 1000000000000).toFixed(1) + 'T';
+            } else if (amount >= 1000000000) {
+                return 'Rp ' + (amount / 1000000000).toFixed(1) + 'M';
+            } else if (amount >= 1000000) {
+                return 'Rp ' + (amount / 1000000).toFixed(1) + 'Jt';
+            } else if (amount >= 1000) {
+                return 'Rp ' + (amount / 1000).toFixed(1) + 'Rb';
+            }
+            return 'Rp ' + amount;
+        }
+
+        // Show alert
+        function showAlert(message, type) {
+            // Create alert element
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.textContent = message;
+
+            // Insert at the top of main content
+            const main = document.querySelector('main .container');
+            main.insertBefore(alertDiv, main.firstChild);
+
+            // Auto remove after 3 seconds
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 3000);
+        }
+
+        // Initialize application
+        document.addEventListener('DOMContentLoaded', function() {
+            initSupabase();
+            loadAllData();
+
+            // Set current year as default
+            const currentYear = new Date().getFullYear();
+            document.getElementById('tahunPendapatan').value = currentYear;
+            document.getElementById('tahunPembelanjaan').value = currentYear;
+            document.getElementById('tahunPembiayaan').value = currentYear;
+        });
+
+        // Handle navigation clicks
+        document.addEventListener('click', function(e) {
+            if (e.target.matches('.nav-menu a')) {
+                e.preventDefault();
+                
+                // Remove active class from all nav links
+                document.querySelectorAll('.nav-menu a').forEach(link => {
+                    link.classList.remove('active');
+                });
+                
+                // Add active class to clicked link
+                e.target.classList.add('active');
+            }
+        });
+
+        // Database schema untuk Supabase
+        // Tabel: apbd_data
+        // Kolom:
+        // - id (int8, primary key, auto increment)
+        // - tahun (int4, not null)
+        // - kategori (text, not null)
+        // - subkategori (text, not null) 
+        // - jumlah (int8, not null)
+        // - created_at (timestamptz, default now())
+
+        /* 
+        SQL untuk membuat tabel di Supabase:
+
+        CREATE TABLE apbd_data (
+            id SERIAL PRIMARY KEY,
+            tahun INTEGER NOT NULL,
+            kategori TEXT NOT NULL,
+            subkategori TEXT NOT NULL,
+            jumlah BIGINT NOT NULL,
+            created_at TIMESTAMPTZ DEFAULT NOW()
+        );
+
+        -- Enable Row Level Security
+        ALTER TABLE apbd_data ENABLE ROW LEVEL SECURITY;
+
+        -- Create policy to allow all operations for authenticated users
+        CREATE POLICY "Allow all operations" ON apbd_data
+        FOR ALL USING (true);
+        */
+    </script>
+</body>
+</html>
