@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Realisasi APBD</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <h2>REALISASI APBD</h2>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="pendapatan.html">Pendapatan</a></li>
+                <li><a href="pembelanjaan.html">Pembelanjaan</a></li>
+                <li><a href="pembiayaan.html">Pembiayaan</a></li>
+                <li><a href="admin.html" class="active">Login Admin</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container">
+        <!-- Login Form -->
+        <section id="loginSection" class="login-section">
+            <div class="login-container">
+                <h2>Login Admin</h2>
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Login</button>
+                </form>
+                <div id="loginError" class="error-message"></div>
+            </div>
+        </section>
+
+        <!-- Admin Panel (Hidden by default) -->
+        <section id="adminPanel" class="admin-panel" style="display: none;">
+            <div class="admin-header">
+                <h1>Admin Panel - Kelola Data APBD</h1>
+                <button id="logoutBtn" class="btn btn-secondary">Logout</button>
+            </div>
+
+            <!-- Add Data Form -->
+            <div class="admin-section">
+                <h3>Tambah Data Baru</h3>
+                <form id="addDataForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="tahun">Tahun</label>
+                            <input type="number" id="tahun" min="2020" max="2030" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="kategori">Kategori</label>
+                            <select id="kategori" required>
+                                <option value="">Pilih Kategori</option>
+                                <option value="Pendapatan">Pendapatan</option>
+                                <option value="Pembelanjaan">Pembelanjaan</option>
+                                <option value="Pembiayaan">Pembiayaan</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="subkategori">Subkategori</label>
+                            <input type="text" id="subkategori" placeholder="Ketik subkategori..." required>
+                        </div>
+                        <div class="form-group">
+                            <label for="jumlah">Jumlah (Rp)</label>
+                            <input type="number" id="jumlah" min="0" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Tambah Data</button>
+                </form>
+                <div id="addMessage" class="message"></div>
+            </div>
+
+            <!-- Data Management -->
+            <div class="admin-section">
+                <h3>Kelola Data</h3>
+                <div class="filter-controls">
+                    <select id="filterKategori">
+                        <option value="all">Semua Kategori</option>
+                        <option value="Pendapatan">Pendapatan</option>
+                        <option value="Pembelanjaan">Pembelanjaan</option>
+                        <option value="Pembiayaan">Pembiayaan</option>
+                    </select>
+                    <select id="filterTahun">
+                        <option value="all">Semua Tahun</option>
+                    </select>
+                    <button id="refreshData" class="btn btn-secondary">↻ Refresh</button>
+                </div>
+
+                <div class="data-grid">
+                    <table id="adminDataTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Tahun</th>
+                                <th>Kategori</th>
+                                <th>Subkategori</th>
+                                <th>Jumlah (Rp)</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminTableBody">
+                            <tr>
+                                <td colspan="6" class="text-center">Loading data...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 Sistem Pendataan Realisasi APBD. All rights reserved.</p>
+    </footer>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="modal">
+        <div class="modal-content">
+            <h3>Konfirmasi Hapus</h3>
+            <p>Apakah Anda yakin ingin menghapus data ini?</p>
+            <div class="modal-buttons">
+                <button id="confirmDelete" class="btn btn-danger">Hapus</button>
+                <button id="cancelDelete" class="btn btn-secondary">Batal</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase.js"></script>
+    <script src="js/script.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            initAdmin();
+        });
+    </script>
+</body>
+</html>
