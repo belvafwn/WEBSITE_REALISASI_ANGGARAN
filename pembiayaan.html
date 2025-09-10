@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pembiayaan - Realisasi APBD</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <h2>REALISASI APBD</h2>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="pendapatan.html">Pendapatan</a></li>
+                <li><a href="pembelanjaan.html">Pembelanjaan</a></li>
+                <li><a href="pembiayaan.html" class="active">Pembiayaan</a></li>
+                <li><a href="admin.html">Login Admin</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container">
+        <section class="page-header">
+            <h1>Data Pembiayaan Daerah</h1>
+            <div class="filters">
+                <select id="yearFilter">
+                    <option value="all">Semua Tahun</option>
+                </select>
+                <button id="refreshBtn" class="btn btn-secondary">↻ Refresh</button>
+            </div>
+        </section>
+
+        <section class="data-overview">
+            <div class="summary-box">
+                <h3>Total Pembiayaan</h3>
+                <p class="total-amount" id="totalAmount">Rp 0</p>
+            </div>
+        </section>
+
+        <section class="charts-section">
+            <div class="chart-wrapper">
+                <h3>Grafik Pembiayaan per Subkategori</h3>
+                <div class="chart-container">
+                    <canvas id="pembiayaanChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="chart-wrapper">
+                <h3>Trend Pembiayaan per Tahun</h3>
+                <div class="chart-container">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <section class="data-table">
+            <h3>Detail Data Pembiayaan</h3>
+            <div class="table-wrapper">
+                <table id="dataTable">
+                    <thead>
+                        <tr>
+                            <th>Tahun</th>
+                            <th>Subkategori</th>
+                            <th>Jumlah (Rp)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <tr>
+                            <td colspan="3" class="text-center">Loading data...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 Sistem Pendataan Realisasi APBD. All rights reserved.</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/supabase.js"></script>
+    <script src="js/script.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            loadCategoryData('Pembiayaan');
+        });
+    </script>
+</body>
+</html>
